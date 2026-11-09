@@ -1,0 +1,154 @@
+{% extends "admin/base.html" %}
+{% block title %}العروض والباقات | أدمن M.Kawasaki{% endblock %}
+{% block page_title %}🎁 العروض والباقات{% endblock %}
+
+{% block extra_css %}
+<style>
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:1.5rem}
+.a-card-head{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.3rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.6rem}
+.a-card-head h3{font-size:.93rem;font-weight:700;color:var(--text)}
+.a-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.a-table{width:100%;border-collapse:collapse;min-width:640px}
+.a-table th{text-align:right;padding:.65rem .9rem;font-size:.7rem;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);white-space:nowrap}
+.a-table td{padding:.7rem .9rem;font-size:.83rem;border-bottom:1px solid rgba(42,46,42,.5);vertical-align:middle}
+.a-table tr:last-child td{border-bottom:none}
+.a-table tr:hover td{background:rgba(255,255,255,.025)}
+.prod-photo{width:44px;height:44px;border-radius:9px;object-fit:cover;border:1px solid var(--border);display:block}
+.prod-photo-placeholder{width:44px;height:44px;border-radius:9px;border:1px dashed var(--border);background:rgba(255,255,255,.03);display:flex;align-items:center;justify-content:center;font-size:.9rem;color:var(--muted)}
+.actions{display:flex;gap:.35rem;align-items:center;flex-wrap:wrap}
+.combo-parts{font-size:.78rem;color:var(--muted);line-height:1.5}
+
+/* Mobile card view */
+.prod-mobile-list{display:none;padding:.75rem}
+.prod-mob-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:.75rem;display:flex;gap:.9rem;align-items:flex-start}
+.prod-mob-img{width:56px;height:56px;border-radius:10px;object-fit:cover;border:1px solid var(--border);flex-shrink:0}
+.prod-mob-placeholder{width:56px;height:56px;border-radius:10px;border:1px dashed var(--border);background:rgba(255,255,255,.03);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.prod-mob-info{flex:1;min-width:0}
+.prod-mob-name{font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:.2rem}
+.prod-mob-meta{font-size:.75rem;color:var(--muted);margin-bottom:.5rem}
+.prod-mob-actions{display:flex;gap:.4rem;flex-wrap:wrap}
+
+@media(max-width:700px){
+  .a-table-wrap{display:none}
+  .prod-mobile-list{display:block}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="a-card" style="padding:1rem 1.3rem;margin-bottom:1rem;font-size:.83rem;color:var(--muted)">
+  💡 العرض هو منتج بيتكوّن من نوعين مختلفين مع بعض (مثلاً: فلتر + شمعة) بكمية معيّنة من كل نوع. بيظهر فى المتجر أونلاين زى أى منتج عادى، ومخزونه بيتحسب أوتوماتيك من مخزون النوعين اللى بيتكوّن منهم — لما يتباع، بيتخصم من الاتنين مع بعض.
+</div>
+
+<div class="a-card">
+  <div class="a-card-head">
+    <h3>العروض ({{ combos|length }})</h3>
+    <div style="display:flex;gap:.5rem">
+      <a href="{{ url_for('admin_products') }}" class="btn btn-ghost">🛒 المنتجات</a>
+      <a href="{{ url_for('admin_combo_add') }}" class="btn btn-gold">➕ إضافة عرض</a>
+    </div>
+  </div>
+
+  <!-- Desktop Table -->
+  <div class="a-table-wrap">
+    <table class="a-table">
+      <thead>
+        <tr>
+          <th style="text-align:center">الصورة</th>
+          <th>اسم العرض</th>
+          <th>المكوّنات</th>
+          <th>السعر</th>
+          <th>متاح فعلياً</th>
+          <th>الحالة</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in combos %}
+        <tr>
+          <td style="text-align:center">
+            {% if p['photo'] %}
+              <img src="{{ p['photo'] }}" alt="{{ p['name_ar'] }}" class="prod-photo"
+                   onerror="this.outerHTML='<div class=prod-photo-placeholder>🎁</div>'">
+            {% else %}
+              <div class="prod-photo-placeholder">🎁</div>
+            {% endif %}
+          </td>
+          <td><strong>{{ p['name_ar'] }}</strong></td>
+          <td class="combo-parts">
+            {% if p['combo1_name'] %}{{ p['combo1_qty'] }} × {{ p['combo1_name'] }}{% endif %}
+            {% if p['combo2_name'] %}<br>{{ p['combo2_qty'] }} × {{ p['combo2_name'] }}{% endif %}
+          </td>
+          <td>
+            <strong>{{ p['price']|int }} جنيه</strong>
+            {% if p['old_price'] %}<br><small style="color:#888;text-decoration:line-through">{{ p['old_price']|int }}</small>{% endif %}
+          </td>
+          <td>
+            <strong>{{ p['stock'] }} عرض</strong>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:.25rem;line-height:1.6">
+              {% if p['combo1_name'] %}{{ p['combo1_name'] }}: <strong>{{ p['combo1_stock'] or 0 }}</strong> قطعة{% endif %}
+              {% if p['combo2_name'] %}<br>{{ p['combo2_name'] }}: <strong>{{ p['combo2_stock'] or 0 }}</strong> قطعة{% endif %}
+            </div>
+          </td>
+          <td>{% if p['active'] %}<span class="badge badge-green">✅ نشط</span>{% else %}<span class="badge badge-red">⏸️ موقف</span>{% endif %}</td>
+          <td>
+            <div class="actions">
+              <a href="{{ url_for('admin_combo_edit', pid=p['id']) }}" class="btn btn-gold btn-sm">✏️</a>
+              <form action="{{ url_for('admin_combo_toggle', pid=p['id']) }}" method="POST" style="display:inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-ghost btn-sm" title="{{ 'إيقاف' if p['active'] else 'تفعيل' }}">{{ '⏸️' if p['active'] else '▶️' }}</button>
+              </form>
+              <form action="{{ url_for('admin_combo_delete', pid=p['id']) }}" method="POST" style="display:inline" onsubmit="return confirm('تأكيد حذف العرض؟')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-red btn-sm">🗑️</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:3rem"><div style="font-size:2rem;margin-bottom:.5rem">🎁</div>لا توجد عروض بعد</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Mobile Card View -->
+  <div class="prod-mobile-list">
+    {% for p in combos %}
+    <div class="prod-mob-card">
+      {% if p['photo'] %}
+        <img src="{{ p['photo'] }}" alt="{{ p['name_ar'] }}" class="prod-mob-img" onerror="this.outerHTML='<div class=prod-mob-placeholder>🎁</div>'">
+      {% else %}
+        <div class="prod-mob-placeholder">🎁</div>
+      {% endif %}
+      <div class="prod-mob-info">
+        <div class="prod-mob-name">{{ p['name_ar'] }}</div>
+        <div class="prod-mob-meta">
+          {{ p['price']|int }} جنيه
+          {% if p['old_price'] %} · <s style="opacity:.6">{{ p['old_price']|int }}</s>{% endif %}
+          · متاح: {{ p['stock'] }}
+          · {% if p['active'] %}<span class="badge badge-green">نشط</span>{% else %}<span class="badge badge-red">موقف</span>{% endif %}
+        </div>
+        <div class="combo-parts" style="margin-bottom:.5rem">
+          {% if p['combo1_name'] %}{{ p['combo1_qty'] }} × {{ p['combo1_name'] }} <span style="opacity:.75">(متاح: {{ p['combo1_stock'] or 0 }} قطعة)</span>{% endif %}
+          {% if p['combo2_name'] %}<br>{{ p['combo2_qty'] }} × {{ p['combo2_name'] }} <span style="opacity:.75">(متاح: {{ p['combo2_stock'] or 0 }} قطعة)</span>{% endif %}
+        </div>
+        <div class="prod-mob-actions">
+          <a href="{{ url_for('admin_combo_edit', pid=p['id']) }}" class="btn btn-gold btn-sm">✏️ تعديل</a>
+          <form action="{{ url_for('admin_combo_toggle', pid=p['id']) }}" method="POST" style="display:inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-ghost btn-sm">{{ '⏸️' if p['active'] else '▶️' }}</button>
+          </form>
+          <form action="{{ url_for('admin_combo_delete', pid=p['id']) }}" method="POST" style="display:inline" onsubmit="return confirm('تأكيد حذف؟')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-red btn-sm">🗑️</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:2.5rem;color:var(--muted)"><div style="font-size:2rem">🎁</div><p>لا توجد عروض</p></div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

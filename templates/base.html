@@ -1,0 +1,7 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}{{ S('store_name') }}{% endblock %}</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body>
+<nav><div class="wrap"><a href="/"><img src="{{ url_for('static', filename='logo.jpeg') }}" alt="logo"></a>
+<a href="/">الرئيسية</a><a href="{{ url_for('shop') }}">المتجر</a><a href="{{ url_for('about') }}">من نحن</a><a href="{{ url_for('contact') }}">تواصل معنا</a><a href="{{ url_for('track') }}">تتبع طلب</a><span class="sp"></span>
+<a href="{{ url_for('cart') }}">🛒 السلة <span class="badge">{{ cart_count }}</span></a><a href="{{ url_for('admin_login') }}" class="mut">دخول الإدارة</a></div></nav>
+<div class="wrap">{% for c, m in get_flashed_messages(with_categories=true) %}<div class="flash {{ c }}">{{ m }}</div>{% endfor %}{% block body %}{% endblock %}</div>
+<footer>{{ S('store_name') }} — {{ S('store_sub') }}<br>📞 {{ S('phone') }} | {{ S('address') }}</footer></body></html>

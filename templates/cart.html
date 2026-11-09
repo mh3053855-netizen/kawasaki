@@ -1,0 +1,15 @@
+{% extends 'base.html' %}{% block body %}<h2>🛒 سلة الشراء</h2>{% if items %}<div class="co-grid"><div class="card"><b>{{ items|length }} منتج</b>
+{% for i in items %}<div class="ci"><div class="n"><b>{{ i.name }}</b><div class="mut">{{ i.price|m }} جنيه</div></div>
+<form method="post" action="{{ url_for('cart_update') }}" style="display:flex;gap:6px;align-items:center"><input type="hidden" name="cid" value="{{ i.key }}"><button class="qb" name="action" value="-">−</button><b>{{ i.qty }}</b><button class="qb" name="action" value="+">+</button><button class="btn r s" name="action" value="del" title="حذف">🗑</button></form>
+<div class="price" style="min-width:90px;text-align:left">{{ (i.price*i.qty)|m }}</div></div>{% endfor %}</div>
+<div class="card sum"><h3>ملخص الطلب</h3>
+{% if t.coupon %}<div class="flash ok">🎉 كود «{{ t.coupon }}» مفعّل{% if t.free %} — توصيل مجاني{% endif %}<form method="post" action="{{ url_for('cart_coupon_remove') }}" style="display:inline"><button class="btn r s">✕</button></form></div>
+{% else %}<form method="post" action="{{ url_for('cart_coupon') }}" class="coupon"><input name="coupon_code" placeholder="كود الخصم" style="direction:ltr"><button>تفعيل</button></form><br>{% endif %}
+<div class="sr"><span>المجموع</span><span>{{ t.sub|m }} جنيه</span></div>
+{% if t.disc %}<div class="sr free"><span>🎟️ خصم الكود</span><span>−{{ t.disc|m }} جنيه</span></div>{% endif %}
+<div class="sr"><span>ضريبة {{ t.rate|int }}%</span><span>{{ t.tax|m }} جنيه</span></div>
+<div class="sr"><span>الشحن</span>{% if t.freeship %}<span class="free">مجاني 🎉</span>{% else %}<span class="mut">يُحدَّد بالمحافظة 🚚</span>{% endif %}</div>
+{% if not t.freeship %}<p class="mut">أضف <b>{{ (t.thresh - t.net)|m }}</b> جنيه للشحن المجاني</p>{% endif %}
+<div class="sr tot"><span>الإجمالي (بدون شحن)</span><span>{{ (t.net+t.tax)|m }} جنيه</span></div>
+<a class="btn" style="width:100%;text-align:center;margin-top:10px" href="{{ url_for('checkout') }}">إتمام الشراء</a><p style="text-align:center"><a href="{{ url_for('shop') }}">← كمّل تسوّقك</a></p></div></div>
+{% else %}<div class="card" style="text-align:center;padding:50px"><div style="font-size:50px">🛒</div><h3>السلة فارغة</h3><a class="btn" href="{{ url_for('shop') }}">تسوق الآن</a></div>{% endif %}{% endblock %}

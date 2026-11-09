@@ -1,0 +1,11 @@
+{% extends 'base.html' %}{% block body %}<h2>🔍 تتبع طلبك</h2><p class="mut">ادخل رقم موبايلك بس وتابع كل طلباتك</p>
+<form method="post" class="card" style="display:flex;gap:10px;flex-wrap:wrap"><input name="phone" value="{{ ph }}" required maxlength="11" inputmode="numeric" placeholder="01XXXXXXXXX" style="flex:1;margin:0"><button>ابحث عن طلباتي</button></form>
+{% set flow = [('confirmed','تم استلام الطلب','وصلنا طلبك وبنراجع بياناته.'),('packed','جارى التغليف','بنجهز طلبك بعناية.'),('shipped','فى الطريق إليك','طلبك خرج وفى الطريق لعنوانك.'),('delivered','تم التسليم','تم تسليم طلبك بنجاح.')] %}
+{% for o, items in res %}{% set keys = flow|map(attribute=0)|list %}{% set idx = keys.index(o.status) if o.status in keys else -1 %}<br>
+<div class="card"><h3>طلب {{ o.order_number }} <span class="mut">· {{ o.created_at[:10] }}</span></h3>
+{% if o.status == 'cancelled' %}<div class="flash err">❌ تم إلغاء الطلب — تواصل معنا لأى استفسار.</div>{% else %}{% for k, t, d in flow %}<div class="orow" style="opacity:{{ '1' if loop.index0 <= idx else '0.4' }}"><span><b>{{ '✅' if loop.index0 < idx else ('📍' if loop.index0 == idx else '⏳') }} {{ t }}</b><br><span class="mut">{{ d }}</span></span></div>{% endfor %}{% endif %}
+{% if o.waybill %}<div class="orow"><span>🚚 بوليصة الشحن</span><b>{{ o.waybill }}</b></div>{% endif %}
+<div class="orow"><span>العنوان</span><span>{{ o.city }} - {{ o.district }} - {{ o.street }} - {{ o.building }}</span></div>
+{% for i in items %}<div class="orow"><span>{{ i.name }} ×{{ i.qty }}</span><span>{{ (i.price*i.qty)|m }} جنيه</span></div>{% endfor %}
+{% if o.discount %}<div class="orow"><span>خصم</span><span>−{{ o.discount|m }}</span></div>{% endif %}<div class="orow"><span>الضريبة</span><span>{{ (o.tax or 0)|m }}</span></div><div class="orow"><span>الشحن</span><span>{{ (o.shipping or 0)|m }}</span></div>
+<div class="orow"><b>الإجمالي</b><b class="price">{{ o.grand_total|m }} جنيه</b></div></div>{% endfor %}{% endblock %}

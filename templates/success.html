@@ -1,0 +1,12 @@
+{% extends 'base.html' %}{% block body %}<div style="text-align:center;padding:20px"><div style="font-size:60px">✅</div><h1>تم استلام طلبك!</h1><p class="mut">رقم الطلب: <b class="price">{{ o.order_number }}</b></p>
+<div class="card" style="max-width:520px;margin:10px auto;text-align:right;border-color:#f59e0b">📌 <b>احتفظ برقم الموبايل</b> لمتابعة الطلب في أي وقت — <a href="{{ url_for('track', phone=o.phone) }}">🔍 تتبع طلبك الآن</a></div>
+<div class="card" style="max-width:520px;margin:10px auto;text-align:right">💵 <b>الدفع كاش عند الاستلام</b><br><span class="mut">سيتصل بك المندوب قبل التوصيل — جهّز المبلغ {{ o.grand_total|m }} جنيه</span></div>
+<div class="card" style="max-width:520px;margin:10px auto;text-align:right">
+<div class="orow"><span>الاسم</span><b>{{ o.full_name }}</b></div><div class="orow"><span>رقم الموبايل</span><b>{{ o.phone }}</b></div><div class="orow"><span>المحافظة</span><b>{{ o.city }}</b></div>
+{% for l, v in [('المدينة / الحي', o.district), ('الشارع', o.street), ('المبنى / الشقة', o.building), ('ملاحظات', o.address), ('الرمز البريدي', o.postal)] %}{% if v %}<div class="orow"><span>{{ l }}</span><b>{{ v }}</b></div>{% endif %}{% endfor %}
+<div class="orow"><span>طريقة الدفع</span><b>💵 كاش عند الاستلام</b></div><div class="orow"><span>الحالة</span><b class="price">✅ مؤكد</b></div><br>
+{% for i in items %}<div class="orow"><span>{{ i.name }} ×{{ i.qty }}</span><span>{{ (i.price*i.qty)|m }} جنيه</span></div>{% endfor %}
+{% if o.discount %}<div class="orow"><span>🎟️ خصم {{ o.coupon }}</span><span>−{{ o.discount|m }} جنيه</span></div>{% endif %}
+<div class="orow"><span>الضريبة</span><span>{{ (o.tax or 0)|m }} جنيه</span></div><div class="orow"><span>الشحن</span><span>{% if o.shipping %}{{ o.shipping|m }} جنيه{% else %}مجاني 🎉{% endif %}</span></div>
+<div class="orow"><b>الإجمالي</b><b class="price">{{ o.grand_total|m }} جنيه</b></div></div>
+<a class="btn" href="/">🏠 الرئيسية</a> <a class="btn o" href="{{ url_for('shop') }}">🛒 تسوق مجدداً</a></div>{% endblock %}

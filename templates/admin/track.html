@@ -1,0 +1,10 @@
+{% extends "admin/base.html" %}
+{% block title %}تتبع طلب | أدمن M.Kawasaki{% endblock %}
+{% block page_title %}🔎 تتبع طلب{% endblock %}
+{% block content %}
+<div class="card" style="margin-bottom:1rem"><form method="post" style="display:flex;gap:.6rem;flex-wrap:wrap"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div class="field" style="flex:1;margin:0"><input name="code" placeholder="رقم الطلب أو رقم الهاتف" required></div><button class="btn btn-gold">بحث</button></form></div>
+{% if o %}<div class="card"><div class="card-header"><div class="card-title">{{ o.order_number }} — <span class="badge badge-gold">{{ STATUS_AR.get(o.status, o.status) }}</span></div><a class="btn btn-gold btn-sm" href="{{ url_for('admin_order_invoice', oid=o.id) }}">🧾 فاتورة</a></div>
+<p>{{ o.full_name }} — <span dir="ltr">{{ o.phone }}</span><br><span style="color:var(--muted)">{{ o.city }} {{ o.district }} {{ o.street }} {{ o.building }} {{ o.address }}</span>{% if o.waybill %}<br>بوليصة الشحن: <b>{{ o.waybill }}</b>{% endif %}</p>
+<div class="table-wrap"><table style="min-width:0">{% for i in items %}<tr><td>{{ i.name }}</td><td>{{ i.qty }} × {{ i.price|m }}</td><td>{{ (i.qty*i.price)|m }}</td></tr>{% endfor %}</table></div>
+<p style="margin:.8rem 0">الإجمالى <b>{{ o.grand_total|m }}</b> | المدفوع <b>{{ o.paid|m }}</b> | المتبقى <b>{{ (o.grand_total-o.paid)|m }}</b></p>
+<form method="post" action="{{ url_for('admin_order_status', oid=o.id) }}" style="display:flex;gap:.6rem"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><select name="status" class="field" style="width:auto;margin:0;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:.45rem">{% for k,l in STATUS_AR.items() %}<option value="{{ k }}" {{ 'selected' if k==o.status }}>{{ l }}</option>{% endfor %}</select><button class="btn btn-gold">تحديث الحالة</button></form></div>{% endif %}{% endblock %}

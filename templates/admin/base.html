@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5">
+<title>{% block title %}لوحة التحكم | M.Kawasaki{% endblock %}</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0f0e; --surface:#141714; --card:#1a1d1a; --border:#2a2e2a;
+    --gold:#c9a84c; --gold-lt:#e2c97e; --green:#2d6a4f; --green-lt:#3a8a65;
+    --red:#c0392b; --text:#e8ede8; --muted:#7a8a7a; --sidebar-w:260px;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Cairo",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+
+  /* ── Sidebar ── */
+  .sidebar{width:var(--sidebar-w);background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;right:0;bottom:0;z-index:200;overflow-y:auto;transition:transform .3s ease}
+  .sidebar-brand{padding:1.5rem 1.3rem 1.1rem;border-bottom:1px solid var(--border)}
+  .brand-icon{font-size:1.9rem;line-height:1;display:block;margin-bottom:.4rem}
+  .brand-name{font-size:1.25rem;font-weight:900;color:var(--gold);letter-spacing:.5px;display:block}
+  .brand-sub{font-size:.7rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase}
+  .sidebar-nav{padding:1rem 0;flex:1}
+  .nav-section{padding:.4rem 1.2rem .2rem;font-size:.63rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:.6rem}
+  .nav-link{display:flex;align-items:center;gap:.75rem;padding:.65rem 1.3rem;color:var(--muted);text-decoration:none;font-size:.9rem;font-weight:600;transition:all .2s;border-right:3px solid transparent}
+  .nav-link:hover{color:var(--text);background:rgba(201,168,76,.06)}
+  .nav-link.active{color:var(--gold);background:rgba(201,168,76,.1);border-right-color:var(--gold)}
+  .nav-icon{font-size:1.05rem;width:22px;text-align:center;flex-shrink:0}
+  .sidebar-footer{padding:1.1rem 1.3rem;border-top:1px solid var(--border)}
+  .store-link{display:flex;align-items:center;gap:.4rem;color:var(--muted);text-decoration:none;font-size:.8rem;font-weight:600;padding:.4rem .9rem;border:1px solid var(--border);border-radius:8px;transition:all .2s;margin-bottom:.7rem}
+  .store-link:hover{color:var(--gold);border-color:var(--gold)}
+  .logout-btn{display:flex;align-items:center;gap:.6rem;color:var(--muted);text-decoration:none;font-size:.86rem;font-weight:600;transition:color .2s;padding:.5rem 0}
+  .logout-btn:hover{color:var(--red)}
+
+  /* ── Overlay (موبايل) ── */
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:190}
+  .sidebar-overlay.open{display:block}
+
+  /* ── Main ── */
+  .main{margin-right:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;min-width:0}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:.85rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:.75rem}
+  .page-title{font-size:1rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .page-title span{color:var(--gold)}
+  .topbar-actions{display:flex;align-items:center;gap:.75rem;flex-shrink:0}
+  .topbar-store-link{display:flex;align-items:center;gap:.4rem;color:var(--muted);text-decoration:none;font-size:.8rem;font-weight:600;padding:.35rem .85rem;border:1px solid var(--border);border-radius:8px;transition:all .2s;white-space:nowrap}
+  .topbar-store-link:hover{color:var(--gold);border-color:var(--gold)}
+  .admin-avatar{width:32px;height:32px;background:linear-gradient(135deg,var(--gold),var(--green));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:900;color:#000;flex-shrink:0}
+  .content{padding:1.5rem;flex:1}
+
+  /* ── Menu button ── */
+  #menu-btn{display:none;background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;padding:.25rem;border-radius:6px;transition:.2s;flex-shrink:0}
+  #menu-btn:hover{color:var(--text);background:rgba(255,255,255,.06)}
+
+  /* ── Flash ── */
+  .flash-wrap{padding:.75rem 1.5rem 0}
+  .flash{padding:.8rem 1.1rem;border-radius:10px;font-size:.88rem;font-weight:600;margin-bottom:.6rem;display:flex;align-items:center;gap:.6rem;animation:slideDown .3s ease}
+  @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+  .flash.success{background:rgba(45,106,79,.25);border:1px solid var(--green);color:#6fcf97}
+  .flash.error{background:rgba(192,57,43,.2);border:1px solid var(--red);color:#ff8a80}
+  .flash.info{background:rgba(201,168,76,.15);border:1px solid var(--gold);color:var(--gold-lt)}
+
+  /* ── Card ── */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.4rem}
+  .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem;padding-bottom:.85rem;border-bottom:1px solid var(--border)}
+  .card-title{font-size:.97rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem}
+
+  /* ── Buttons ── */
+  .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.52rem 1.1rem;border-radius:9px;font-family:"Cairo",sans-serif;font-size:.86rem;font-weight:700;cursor:pointer;border:none;text-decoration:none;transition:all .2s;white-space:nowrap}
+  .btn-gold{background:var(--gold);color:#000}
+  .btn-gold:hover{background:var(--gold-lt);transform:translateY(-1px)}
+  .btn-green{background:var(--green);color:#fff}
+  .btn-green:hover{background:var(--green-lt)}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+  .btn-ghost:hover{color:var(--text);border-color:var(--muted)}
+  .btn-red{background:rgba(192,57,43,.2);color:#ff8a80;border:1px solid rgba(192,57,43,.4)}
+  .btn-red:hover{background:rgba(192,57,43,.35)}
+  .btn-sm{padding:.32rem .75rem;font-size:.78rem}
+
+  /* ── Table ── */
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{width:100%;border-collapse:collapse;min-width:500px}
+  th{text-align:right;padding:.7rem 1rem;font-size:.73rem;color:var(--muted);font-weight:700;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap}
+  td{padding:.8rem 1rem;font-size:.86rem;border-bottom:1px solid rgba(42,46,42,.6);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(255,255,255,.02)}
+
+  /* ── Badges ── */
+  .badge{display:inline-block;padding:.18rem .6rem;border-radius:20px;font-size:.7rem;font-weight:700}
+  .badge-green{background:rgba(45,106,79,.3);color:#6fcf97}
+  .badge-gold{background:rgba(201,168,76,.2);color:var(--gold-lt)}
+  .badge-red{background:rgba(192,57,43,.2);color:#ff8a80}
+  .badge-gray{background:rgba(122,138,122,.15);color:var(--muted)}
+
+  /* ── Fields ── */
+  .field{margin-bottom:1.1rem}
+  .field label{display:block;font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:.4rem;letter-spacing:.3px}
+  .field input,.field textarea,.field select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:.65rem .95rem;color:var(--text);font-family:"Cairo",sans-serif;font-size:.88rem;outline:none;transition:border-color .2s}
+  .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.1)}
+  .field textarea{resize:vertical;min-height:85px}
+  .field select option{background:var(--card)}
+
+  /* ── Grids ── */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.1rem}
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem}
+
+  /* ── Stat cards ── */
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.3rem;position:relative;overflow:hidden;transition:transform .2s}
+  .stat:hover{transform:translateY(-2px)}
+  .stat::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
+  .stat-gold::before{background:var(--gold)}
+  .stat-green::before{background:var(--green-lt)}
+  .stat-blue::before{background:#4a9eff}
+  .stat-purple::before{background:#a78bfa}
+  .stat-icon{font-size:1.5rem;margin-bottom:.65rem;display:block}
+  .stat-val{font-size:1.7rem;font-weight:900;color:var(--text);line-height:1;margin-bottom:.3rem}
+  .stat-label{font-size:.76rem;color:var(--muted);font-weight:600}
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar{width:5px;height:5px}
+  ::-webkit-scrollbar-track{background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  ::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+
+  /* ══ RESPONSIVE ══ */
+
+  /* Tablet (max 900px) */
+  @media(max-width:900px){
+    .sidebar{transform:translateX(100%)}
+    .sidebar.open{transform:translateX(0);box-shadow:-8px 0 30px rgba(0,0,0,.4)}
+    .main{margin-right:0}
+    .grid-4{grid-template-columns:1fr 1fr}
+    .grid-3{grid-template-columns:1fr 1fr}
+    #menu-btn{display:block}
+    .content{padding:1.25rem}
+    .topbar{padding:.8rem 1.25rem}
+  }
+
+  /* Mobile (max 600px) */
+  @media(max-width:600px){
+    .content{padding:1rem .85rem}
+    .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+    .topbar{padding:.75rem .85rem}
+    .flash-wrap{padding:.6rem .85rem 0}
+    .topbar-store-link{display:none}
+    .page-title{font-size:.9rem}
+  }
+
+  /* Small Mobile (max 400px) */
+  @media(max-width:400px){
+    .content{padding:.85rem .65rem}
+    .card{padding:1rem}
+    .btn{padding:.45rem .85rem;font-size:.8rem}
+    .btn-sm{padding:.28rem .6rem;font-size:.72rem}
+  }
+</style>
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- Overlay (موبايل) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <img src="{{ url_for('static', filename='logo.jpeg') }}" style="width:70px;height:70px;border-radius:50%;display:block;margin-bottom:.5rem">
+    <span class="brand-name">{{ s.site_name_ar or 'M.Kawasaki' }}</span>
+    <span class="brand-sub">Admin Panel</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">الرئيسية</div>
+    <a href="{{ url_for('admin_dashboard') }}" class="nav-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}">
+      <span class="nav-icon">📊</span> الداشبورد
+    </a>
+    <a href="{{ url_for('admin_orders') }}" class="nav-link {% if request.endpoint=='admin_orders' %}active{% endif %}">
+      <span class="nav-icon">📦</span> الطلبات
+    </a>
+
+    <a href="{{ url_for('admin_accounts') }}" class="nav-link {% if request.endpoint=='admin_accounts' %}active{% endif %}">
+      <span class="nav-icon">💼</span> الحسابات والمحل
+    </a>
+    <div class="nav-section">المنتجات</div>
+    <a href="{{ url_for('admin_products') }}" class="nav-link {% if request.endpoint in ['admin_products','admin_product_edit'] %}active{% endif %}">
+      <span class="nav-icon">🛒</span> قائمة المنتجات
+    </a>
+    <a href="{{ url_for('admin_product_add') }}" class="nav-link {% if request.endpoint=='admin_product_add' %}active{% endif %}">
+      <span class="nav-icon">➕</span> إضافة منتج
+    </a>
+    <a href="{{ url_for('admin_combos') }}" class="nav-link {% if request.endpoint in ['admin_combos','admin_combo_add','admin_combo_edit'] %}active{% endif %}">
+      <span class="nav-icon">🎁</span> العروض والباقات
+    </a>
+    <div class="nav-section">الإعدادات</div>
+    <a href="{{ url_for('admin_settings') }}" class="nav-link {% if request.endpoint=='admin_settings' %}active{% endif %}">
+      <span class="nav-icon">⚙️</span> إعدادات الموقع
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="{{ url_for('index') }}" class="store-link">🌐 عرض المتجر</a>
+    <a href="{{ url_for('admin_logout') }}" class="logout-btn">🚪 تسجيل الخروج</a>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:.75rem;min-width:0;flex:1">
+      <button id="menu-btn" onclick="toggleSidebar()" aria-label="القائمة">☰</button>
+      <div class="page-title">{% block page_title %}<span>📊</span> الداشبورد{% endblock %}</div>
+    </div>
+    <div class="topbar-actions">
+      <a href="{{ url_for('index') }}" class="topbar-store-link">🌐 المتجر</a>
+      <div class="admin-avatar">A</div>
+    </div>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-wrap">
+      {% for cat, msg in messages %}
+      <div class="flash {{ cat }}">
+        {% if cat=='success' %}✅{% elif cat=='error' %}❌{% else %}ℹ️{% endif %} {{ msg }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+<script>
+  function toggleSidebar(){
+    var sb = document.getElementById('sidebar');
+    var ov = document.getElementById('sidebarOverlay');
+    sb.classList.toggle('open');
+    ov.classList.toggle('open');
+  }
+  function closeSidebar(){
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+  }
+  // إغلاق الـ sidebar لما تضغط على لينك فيه على الموبايل
+  document.querySelectorAll('.nav-link').forEach(function(a){
+    a.addEventListener('click', function(){
+      if(window.innerWidth <= 900) closeSidebar();
+    });
+  });
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

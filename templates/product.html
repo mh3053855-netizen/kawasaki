@@ -1,0 +1,5 @@
+{% extends 'base.html' %}{% block title %}{{ p.name }}{% endblock %}{% block body %}
+<div class="card row"><div class="pimg" style="height:300px">{% if p.photo %}<img src="{{ p.photo }}">{% else %}⚙️{% endif %}</div>
+<div><h1>{{ p.name }}</h1><p class="mut">القسم: {{ p.category }} {% if p.weight %}· يناسب: {{ p.weight }}{% endif %}{% if p.origin_ar %}· الماركة: {{ p.origin_ar }}{% endif %}</p><p>{{ p.description }}</p><div class="price">{{ p.price|m }} ج.م {% if p.old_price %}<s class="mut">{{ p.old_price|m }}</s>{% endif %}</div>
+{% if p.stock > 0 %}<p class="mut">متوفر ({{ p.stock }})</p><form method="post" action="{{ url_for('cart_add') }}"><input type="hidden" name="key" value="p{{ p.id }}"><label>الكمية</label><input type="number" name="qty" value="1" min="1" max="{{ p.stock }}"><button>أضف للسلة</button></form>{% else %}<p style="color:#e74c3c">نفدت الكمية</p>{% endif %}</div></div>
+{% if rel %}<h3>منتجات مشابهة</h3><div class="grid">{% for r in rel %}<a class="card" href="{{ url_for('product', pid=r.id) }}">{{ r.name }}<div class="price">{{ r.price|m }}</div></a>{% endfor %}</div>{% endif %}{% endblock %}

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+  <title>تسجيل الدخول | M.Kawasaki أدمن</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    :root {
+      --dark-green:  #1a3a1a;
+      --mid-green:   #2d6b2d;
+      --bright-green:#3d8b3d;
+      --light-green: #e8f5e9;
+      --border:      #e0ead0;
+      --muted:       #5a7a5a;
+      --red:         #c0392b;
+    }
+
+    body {
+      font-family:'Tajawal',sans-serif;
+      background:linear-gradient(135deg,var(--dark-green) 0%,var(--mid-green) 55%,var(--bright-green) 100%);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:1rem;
+    }
+
+    .box {
+      background:#fff;
+      border-radius:20px;
+      padding:2.25rem;
+      width:100%;
+      max-width:400px;
+      box-shadow:0 20px 60px rgba(0,0,0,.3);
+    }
+
+    /* Logo */
+    .logo       { text-align:center; margin-bottom:1.75rem; }
+    .logo-mark  { font-size:3.2rem; margin-bottom:.45rem; }
+    .logo-name  { font-size:1.85rem; font-weight:900; color:var(--dark-green); }
+    .logo-sub   { font-size:.78rem; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-top:.18rem; }
+
+    h2 { font-size:1.15rem; font-weight:800; color:var(--dark-green); margin-bottom:1.4rem; text-align:center; }
+
+    /* Fields */
+    .field       { margin-bottom:.95rem; }
+    .field label { display:block; font-size:.85rem; font-weight:700; color:var(--mid-green); margin-bottom:.38rem; }
+    .field input { width:100%; padding:11px 14px; border:2px solid var(--border); border-radius:10px; font-family:inherit; font-size:.93rem; color:var(--dark-green); outline:none; transition:.2s; }
+    .field input:focus { border-color:var(--bright-green); box-shadow:0 0 0 3px rgba(61,139,61,.1); }
+
+    /* Submit */
+    .submit-btn {
+      width:100%; padding:13px; border:none; border-radius:10px;
+      background:linear-gradient(135deg,var(--dark-green),var(--mid-green));
+      color:#fff; font-family:inherit; font-size:1rem; font-weight:800;
+      cursor:pointer; margin-top:.45rem; transition:.2s;
+    }
+    .submit-btn:hover { background:linear-gradient(135deg,var(--mid-green),var(--bright-green)); transform:translateY(-1px); }
+    .submit-btn:active { transform:translateY(0); }
+
+    /* Error */
+    .error {
+      background:#ffebee; color:var(--red); border:1.5px solid #ef9a9a;
+      border-radius:10px; padding:10px 14px; font-size:.86rem; font-weight:600;
+      margin-bottom:.95rem; text-align:center;
+    }
+
+    /* Back link */
+    .back { text-align:center; margin-top:1.1rem; }
+    .back a {
+      display:inline-flex; align-items:center; gap:5px; color:var(--muted);
+      font-size:.83rem; font-weight:700; padding:7px 16px;
+      border-radius:50px; border:1.5px solid var(--border); transition:.2s;
+      text-decoration:none;
+    }
+    .back a:hover { background:var(--light-green); color:var(--dark-green); border-color:var(--bright-green); }
+
+    /* ══ RESPONSIVE ══ */
+    @media(max-width:440px){
+      .box { padding:1.75rem 1.4rem; border-radius:16px; }
+      .logo-mark { font-size:2.75rem; }
+      .logo-name { font-size:1.65rem; }
+      h2 { font-size:1.05rem; }
+      .submit-btn { padding:12px; font-size:.95rem; }
+    }
+
+    @media(max-width:360px){
+      body { padding:.75rem; }
+      .box { padding:1.5rem 1.2rem; }
+      .logo-mark { font-size:2.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+
+    <div class="logo">
+      <img src="{{ url_for('static', filename='logo.jpeg') }}" style="width:110px;border-radius:50%;margin-bottom:.5rem">
+      <div class="logo-name">M.Kawasaki</div>
+      <div class="logo-sub">Admin Panel</div>
+    </div>
+
+    <h2>تسجيل دخول المسؤول</h2>
+
+    {% if error %}
+      <div class="error">❌ اسم المستخدم أو كلمة المرور غلط</div>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="error">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('admin_login') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field">
+        <label for="username">اسم المستخدم</label>
+        <input type="text" id="username" name="username"
+               value="{{ request.form.get('username', '') }}"
+               required autofocus autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="password">كلمة المرور</label>
+        <input type="password" id="password" name="password"
+               required autocomplete="current-password">
+      </div>
+      <button type="submit" class="submit-btn">🔐 دخول</button>
+    </form>
+
+    <div class="back">
+      <a href="{{ url_for('index') }}">🏠 العودة للموقع</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

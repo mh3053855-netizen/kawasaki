@@ -1,0 +1,236 @@
+{% extends "admin/base.html" %}
+{% block title %}الطلبات | أدمن M.Kawasaki{% endblock %}
+{% block page_title %}📦 إدارة الطلبات{% endblock %}
+{% block extra_css %}
+<style>
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:1.5rem}
+.a-card-head{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.3rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.5rem}
+.a-card-head h3{font-size:.93rem;font-weight:700;color:var(--text)}
+.a-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.a-table{width:100%;border-collapse:collapse;min-width:800px}
+.a-table th{text-align:right;padding:.65rem .9rem;font-size:.7rem;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);white-space:nowrap}
+.a-table td{padding:.75rem .9rem;font-size:.83rem;border-bottom:1px solid rgba(42,46,42,.5);vertical-align:middle}
+.a-table tr:last-child td{border-bottom:none}
+.a-table tr:hover td{background:rgba(255,255,255,.025)}
+.a-table tr.selected-row td{background:rgba(192,57,43,.06)}
+.status-sel{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:.22rem .45rem;color:var(--text);font-family:Cairo,sans-serif;font-size:.73rem;cursor:pointer;outline:none}
+.status-sel:focus{border-color:var(--gold)}
+.waybill-inp{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:.22rem .45rem;color:var(--text);font-family:Cairo,sans-serif;font-size:.73rem;outline:none;width:110px}
+.waybill-inp:focus{border-color:var(--gold)}
+.waybill-inp.saved{border-color:#27ae60}
+.pay-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.18rem .55rem;border-radius:20px;font-size:.7rem;font-weight:700}
+.pay-card{background:rgba(59,130,246,.15);color:#60a5fa}
+.pay-cod{background:rgba(234,179,8,.15);color:#ca8a04}
+.badge-orange{background:rgba(230,126,34,.2);color:#a04000}
+.badge-blue{background:rgba(41,128,185,.2);color:#1a5276}
+.badge-teal{background:rgba(39,174,96,.2);color:#1a6630}
+.badge-gray{background:rgba(122,138,122,.15);color:#5a6a5a}
+.new-tag{display:inline-block;background:#e11d48;color:#fff;border-radius:20px;padding:.1rem .5rem;font-size:.65rem;font-weight:800;margin-inline-start:.4rem;animation:newPulse 1.6s infinite}
+@keyframes newPulse{0%,100%{opacity:1}50%{opacity:.55}}
+.a-table tr.new-row td{background:rgba(225,29,72,.09)}
+.a-table tr.new-row td:first-child{box-shadow:inset -4px 0 0 #e11d48}
+.new-banner{display:flex;align-items:center;gap:.5rem;padding:.65rem 1.3rem;background:rgba(225,29,72,.12);border-bottom:1px solid rgba(225,29,72,.3);color:#e11d48;font-weight:800;font-size:.85rem}
+
+/* Delete toolbar */
+.delete-toolbar{display:none;align-items:center;gap:.65rem;padding:.55rem 1rem;background:rgba(192,57,43,.08);border-bottom:1px solid rgba(192,57,43,.2);flex-wrap:wrap}
+.delete-toolbar.visible{display:flex}
+.delete-toolbar span{font-size:.78rem;color:#c0392b;font-weight:600}
+.btn-delete-sel{background:#c0392b;color:#fff;border:none;border-radius:8px;padding:.38rem .9rem;font-size:.76rem;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;display:flex;align-items:center;gap:.3rem;transition:background .15s}
+.btn-delete-sel:hover{background:#a93226}
+.btn-cancel-sel{background:transparent;border:1px solid var(--border);border-radius:8px;padding:.38rem .75rem;font-size:.76rem;cursor:pointer;color:var(--muted);font-family:Cairo,sans-serif}
+.btn-cancel-sel:hover{background:rgba(255,255,255,.06)}
+
+/* Checkbox */
+.order-check{width:14px;height:14px;cursor:pointer;accent-color:#c0392b}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal-box{background:#1e2420;border:1px solid var(--border);border-radius:16px;padding:1.75rem;max-width:400px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.modal-icon{font-size:2.8rem;margin-bottom:.65rem}
+.modal-box h4{font-size:.97rem;font-weight:700;color:#e74c3c;margin-bottom:.45rem}
+.modal-box p{font-size:.8rem;color:var(--muted);margin-bottom:1.3rem;line-height:1.6}
+.modal-box p strong{color:#e8d5b5}
+.modal-actions{display:flex;gap:.65rem;justify-content:center}
+.btn-confirm-del{background:#c0392b;color:#fff;border:none;border-radius:9px;padding:.52rem 1.3rem;font-size:.83rem;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif}
+.btn-confirm-del:hover{background:#a93226}
+.btn-modal-cancel{background:transparent;border:1px solid var(--border);border-radius:9px;padding:.52rem 1.1rem;font-size:.83rem;cursor:pointer;color:var(--muted);font-family:Cairo,sans-serif}
+.btn-modal-cancel:hover{background:rgba(255,255,255,.06)}
+
+/* Responsive */
+@media(max-width:600px){
+  .a-table{min-width:680px}
+  .a-table th,.a-table td{padding:.6rem .65rem;font-size:.78rem}
+  /* إخفاء بعض الأعمدة على الموبايل */
+  .a-table .col-phone,.a-table .col-date{display:none}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box">
+    <div class="modal-icon">🗑️</div>
+    <h4>تأكيد الحذف النهائى</h4>
+    <p id="modalMsg">سيتم حذف الطلبات المحددة بشكل نهائى مع جميع بياناتها<br><strong>لا يمكن التراجع عن هذا الإجراء</strong></p>
+    <div class="modal-actions">
+      <button class="btn-confirm-del" id="confirmDelBtn">🗑️ تأكيد الحذف</button>
+      <button class="btn-modal-cancel" onclick="closeModal()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<form id="bulkForm" action="{{ url_for('admin_orders_delete') }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="a-card">
+  <div class="a-card-head">
+    <h3>الطلبات ({{ orders|length }})</h3>
+  </div>
+  {% if new_ids %}
+  <div class="new-banner">🔔 وصلك {{ new_ids|length }} {{ 'طلب جديد' if new_ids|length == 1 else 'طلبات جديدة' }} — متعلّمين باللون الأحمر</div>
+  {% endif %}
+
+  <div class="delete-toolbar" id="deleteToolbar">
+    <span id="selCount">0 طلب محدد</span>
+    <button type="button" class="btn-delete-sel" onclick="openModal()">🗑️ حذف المحدد</button>
+    <button type="button" class="btn-cancel-sel" onclick="clearSelection()">✕ إلغاء</button>
+  </div>
+
+  <div class="a-table-wrap">
+    <table class="a-table">
+      <thead>
+        <tr>
+          <th><input type="checkbox" class="order-check" id="checkAll"></th>
+          <th>رقم الطلب</th>
+          <th>العميل</th>
+          <th class="col-phone">الهاتف</th>
+          <th>المدينة</th>
+          <th>الإجمالى</th>
+          <th>الدفع</th>
+          <th class="col-date">التاريخ</th>
+          <th>الحالة</th>
+          <th>تغيير</th>
+          <th>بوليصة الشحن</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in orders %}
+        <tr data-id="{{ o['id'] }}"{% if o['id'] in new_ids %} class="new-row"{% endif %}>
+          <td><input type="checkbox" class="order-check row-check" name="order_ids" value="{{ o['id'] }}"></td>
+          <td><strong>{{ o['order_number'] }}</strong>{% if o['id'] in new_ids %}<span class="new-tag">🆕 جديد</span>{% endif %}</td>
+          <td>{{ o['full_name'] }}</td>
+          <td class="col-phone">{{ o['phone'] }}</td>
+          <td>{{ o['city'] }}</td>
+          <td><strong>{{ o['grand_total']|int }} جنيه</strong></td>
+          <td>
+            {% if o['payment_method']=='cod' %}
+              <span class="pay-badge pay-cod">💵 كاش</span>
+            {% else %}
+              <span class="pay-badge pay-card">💳 ****{{ o['card_last4'] }}</span>
+            {% endif %}
+          </td>
+          <td class="col-date">{{ o['created_at'][:10] }}</td>
+          <td>
+            <span class="badge
+              {%- if o['status']=='confirmed' %} badge-green
+              {%- elif o['status']=='packed'    %} badge-orange
+              {%- elif o['status']=='shipped'   %} badge-blue
+              {%- elif o['status']=='delivered' %} badge-teal
+              {%- elif o['status']=='cancelled' %} badge-red
+              {%- else %} badge-gray{%- endif %}">
+              {%- if o['status']=='confirmed' %}✅ مؤكد
+              {%- elif o['status']=='packed'    %}📦 تغليف
+              {%- elif o['status']=='shipped'   %}🚚 شحن
+              {%- elif o['status']=='delivered' %}🏠 تسليم
+              {%- elif o['status']=='cancelled' %}❌ ملغى
+              {%- else %}{{ o['status'] }}{%- endif %}
+            </span>
+          </td>
+          <td>
+            <select class="status-sel" data-oid="{{ o['id'] }}" onchange="updateStatus(this)">
+              <option value="confirmed" {% if o['status']=='confirmed' %}selected{% endif %}>✅ مؤكد</option>
+              <option value="packed"    {% if o['status']=='packed'    %}selected{% endif %}>📦 تغليف</option>
+              <option value="shipped"   {% if o['status']=='shipped'   %}selected{% endif %}>🚚 شحن</option>
+              <option value="delivered" {% if o['status']=='delivered' %}selected{% endif %}>🏠 تسليم</option>
+              <option value="cancelled" {% if o['status']=='cancelled' %}selected{% endif %}>❌ ملغى</option>
+            </select>
+          </td>
+          <td>
+            <input type="text" class="waybill-inp" data-oid="{{ o['id'] }}"
+                   value="{{ o['waybill'] or '' }}" placeholder="رقم البوليصة..."
+                   onchange="updateWaybill(this)">
+          </td>
+          <td>
+            <a href="{{ url_for('admin_order_invoice', oid=o['id']) }}" class="btn btn-gold btn-sm" target="_blank">🧾 فاتورة</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="12" style="text-align:center;color:var(--muted);padding:3rem">لا توجد طلبات بعد</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+</form>
+
+<script>
+function updateStatus(sel) {
+  var oid = sel.dataset.oid, status = sel.value, fd = new FormData();
+  fd.append('status', status);
+  fd.append('csrf_token', '{{ csrf_token() }}');
+  fetch('/admin/orders/status/' + oid, {method:'POST', body:fd})
+    .then(function(r){ if(!r.ok){ alert('حدث خطأ'); sel.value = sel.dataset.prev||sel.value; } else { sel.dataset.prev = status; } })
+    .catch(function(){ alert('تعذّر الاتصال'); });
+}
+document.querySelectorAll('.status-sel[data-oid]').forEach(function(s){ s.dataset.prev = s.value; });
+
+function updateWaybill(inp) {
+  var oid = inp.dataset.oid, waybill = inp.value.trim(), fd = new FormData();
+  fd.append('waybill', waybill);
+  fd.append('csrf_token', '{{ csrf_token() }}');
+  inp.classList.remove('saved');
+  fetch('/admin/orders/waybill/' + oid, {method:'POST', body:fd})
+    .then(function(r){
+      if(!r.ok){ alert('حدث خطأ فى حفظ بوليصة الشحن'); return; }
+      inp.classList.add('saved');
+      setTimeout(function(){ inp.classList.remove('saved'); }, 1500);
+    })
+    .catch(function(){ alert('تعذّر الاتصال'); });
+}
+
+var checkAll = document.getElementById('checkAll');
+var toolbar  = document.getElementById('deleteToolbar');
+var selCount = document.getElementById('selCount');
+var modal    = document.getElementById('deleteModal');
+
+function getChecked(){ return [...document.querySelectorAll('.row-check:checked')]; }
+
+function updateToolbar(){
+  var checked = getChecked(), n = checked.length;
+  if(n > 0){ toolbar.classList.add('visible'); selCount.textContent = n===1 ? 'طلب واحد محدد' : n+' طلبات محددة'; }
+  else { toolbar.classList.remove('visible'); }
+  document.querySelectorAll('.row-check').forEach(function(cb){ cb.closest('tr').classList.toggle('selected-row', cb.checked); });
+  var all = document.querySelectorAll('.row-check');
+  checkAll.indeterminate = n > 0 && n < all.length;
+  checkAll.checked = n > 0 && n === all.length;
+}
+checkAll.addEventListener('change', function(){ document.querySelectorAll('.row-check').forEach(function(cb){ cb.checked = checkAll.checked; }); updateToolbar(); });
+document.querySelectorAll('.row-check').forEach(function(cb){ cb.addEventListener('change', updateToolbar); });
+function clearSelection(){ document.querySelectorAll('.row-check').forEach(function(cb){ cb.checked=false; }); checkAll.checked=false; updateToolbar(); }
+
+function openModal(){
+  var n = getChecked().length; if(!n) return;
+  document.getElementById('modalMsg').innerHTML = n===1
+    ? 'سيتم حذف هذا الطلب نهائياً<br><strong>لا يمكن التراجع</strong>'
+    : 'سيتم حذف <strong>'+n+' طلبات</strong> نهائياً<br><strong>لا يمكن التراجع</strong>';
+  modal.classList.add('open');
+}
+function closeModal(){ modal.classList.remove('open'); }
+document.getElementById('confirmDelBtn').addEventListener('click', function(){ document.getElementById('bulkForm').submit(); });
+modal.addEventListener('click', function(e){ if(e.target===modal) closeModal(); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
+</script>
+{% endblock %}

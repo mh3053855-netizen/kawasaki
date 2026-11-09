@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% block body %}<h2>إتمام الطلب</h2>
+<form method="post" class="co-grid"><div>
+<div class="card" style="text-align:center;margin-bottom:14px"><div style="font-size:40px">💵</div><h3>الدفع كاش عند الاستلام</h3><p class="mut">استلم طلبك وادفع للمندوب نقداً بدون أي رسوم إضافية<br>1) اطلب ← 2) نشحن ← 3) استلم وادفع</p></div>
+<div class="card"><h3>📦 بيانات التوصيل</h3>
+<div class="f2"><div><label>الاسم بالكامل *</label><input name="full_name" minlength="10" required placeholder="ادخل الاسم ثلاثي"></div><div><label>رقم الموبيل *</label><input name="phone" type="tel" minlength="11" maxlength="11" pattern="\d{11}" required placeholder="01XXXXXXXXX"></div></div>
+<label>المحافظة *</label><select name="city" id="city" required><option value="">اختر المحافظة...</option>{% for g in govs %}<option>{{ g }}</option>{% endfor %}</select>
+<div class="f2"><div><label>المدينة / الحي *</label><input name="district" required placeholder="مثال: مدينة نصر، المعادي"></div><div><label>اسم الشارع *</label><input name="street" required placeholder="مثال: شارع التحرير"></div></div>
+<div class="f2"><div><label>رقم المبنى / الشقة *</label><input name="building" required placeholder="عمارة 5 شقة 3"></div><div><label>الرمز البريدي</label><input name="postal" inputmode="numeric" pattern="[0-9]*" maxlength="5" placeholder="اختياري"></div></div>
+<label>ملاحظات للتوصيل (اختياري)</label><input name="address" placeholder="أمام مسجد النور، بجوار البنك"></div></div>
+<div class="card sum"><h3>ملخص الطلب</h3>{% for i in items %}<div class="ci"><div class="n">{{ i.name }} <span class="mut">×{{ i.qty }}</span></div><b class="price">{{ (i.price*i.qty)|m }}</b></div>{% endfor %}
+<div class="sr"><span>المجموع</span><span>{{ t.sub|m }} جنيه</span></div>{% if t.disc %}<div class="sr free"><span>🎟️ خصم الكود</span><span>−{{ t.disc|m }} جنيه</span></div>{% endif %}
+<div class="sr"><span>ضريبة {{ t.rate|int }}%</span><span>{{ t.tax|m }} جنيه</span></div>
+<div class="sr"><span>الشحن</span><span id="ship">{% if t.freeship %}<span class="free">مجاني 🎉</span>{% else %}اختر المحافظة{% endif %}</span></div>
+<div class="sr tot"><span>الإجمالي</span><span id="grand">{{ (t.net+t.tax)|m }} جنيه</span></div><button style="width:100%;margin-top:10px">✅ تأكيد الطلب</button></div></form>
+<script>var M={{ ship_map|tojson }},FREE={{ 'true' if t.freeship else 'false' }},BASE={{ t.net+t.tax }};
+document.getElementById('city').onchange=function(){if(FREE||!this.value)return;var s=M[this.value];document.getElementById('ship').textContent=s.toFixed(2)+' جنيه';document.getElementById('grand').textContent=(BASE+s).toFixed(2)+' جنيه'};</script>{% endblock %}

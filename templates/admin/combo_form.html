@@ -1,0 +1,276 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ 'تعديل عرض' if action=='edit' else 'إضافة عرض' }} | أدمن M.Kawasaki{% endblock %}
+{% block page_title %}{{ '✏️ تعديل عرض' if action=='edit' else '➕ إضافة عرض جديد' }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.pf-grid{display:grid;grid-template-columns:1fr 320px;gap:1.4rem;align-items:start}
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:1.3rem}
+.a-card-head{display:flex;align-items:center;justify-content:space-between;padding:.95rem 1.3rem;border-bottom:1px solid var(--border)}
+.a-card-head h3{font-size:.88rem;font-weight:700;color:var(--text)}
+.a-card-body{padding:1.3rem}
+.fg{margin-bottom:1rem}
+.fg label{display:block;font-size:.73rem;font-weight:700;color:var(--muted);margin-bottom:.38rem;text-transform:uppercase;letter-spacing:.04em}
+.fg input,.fg textarea,.fg select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:.62rem .88rem;font-size:.86rem;color:var(--text);transition:border .2s,box-shadow .2s}
+.fg input:focus,.fg textarea:focus,.fg select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.12)}
+.fg textarea{resize:vertical;min-height:78px}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.fg-row.qty-row{grid-template-columns:2fr 1fr}
+.fg-check{display:flex;align-items:center;gap:.55rem;cursor:pointer;font-size:.86rem;color:var(--text)}
+.fg-check input[type=checkbox]{width:17px;height:17px;cursor:pointer;accent-color:var(--gold)}
+.combo-part-box{border:1.5px dashed var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;background:var(--bg)}
+.combo-part-box h4{font-size:.8rem;color:var(--gold);margin-bottom:.7rem}
+.stock-note{font-size:.72rem;color:var(--muted);margin-top:.3rem}
+.readonly-box{background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:.62rem .88rem;font-size:.9rem;color:var(--text);font-weight:700}
+
+/* Photo upload (نفس ستايل فورم المنتج العادى) */
+.photo-upload-box{border:2px dashed var(--border);border-radius:13px;padding:1.4rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative;background:var(--bg)}
+.photo-upload-box:hover,.photo-upload-box.drag-over{border-color:var(--gold);background:rgba(201,168,76,.06)}
+.photo-upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.photo-upload-icon{font-size:2.2rem;margin-bottom:.45rem;display:block}
+.photo-upload-label{font-size:.8rem;color:var(--muted);line-height:1.5}
+.photo-upload-label strong{color:var(--gold);display:block;font-size:.86rem;margin-bottom:.18rem}
+.photo-preview-wrap{margin-top:.9rem;display:none}
+.photo-preview-wrap.show{display:block}
+.photo-preview-img{width:100%;max-height:200px;object-fit:cover;border-radius:9px;border:1px solid var(--border);display:block}
+.photo-preview-actions{display:flex;gap:.45rem;margin-top:.55rem}
+.current-photo-wrap{margin-bottom:.9rem}
+.current-photo-img{width:100%;max-height:190px;object-fit:cover;border-radius:9px;border:1px solid var(--border);display:block;margin-bottom:.55rem}
+.current-photo-label{font-size:.73rem;color:var(--muted);margin-bottom:.45rem;display:flex;align-items:center;gap:.4rem}
+.current-photo-label span{background:rgba(34,197,94,.15);color:#22c55e;border-radius:20px;padding:.12rem .5rem;font-size:.68rem;font-weight:700}
+.remove-toggle{display:flex;align-items:center;gap:.45rem;font-size:.78rem;color:#ef4444;cursor:pointer;padding:.38rem .55rem;border:1px solid rgba(239,68,68,.3);border-radius:8px;transition:background .2s;background:transparent;width:100%;justify-content:center}
+.remove-toggle:hover{background:rgba(239,68,68,.1)}
+.remove-toggle input{display:none}
+
+@media(max-width:900px){
+  .pf-grid{grid-template-columns:1fr}
+  .pf-grid > div[style*="order:2"]{order:-1 !important}
+}
+@media(max-width:600px){
+  .fg-row{grid-template-columns:1fr}
+  .a-card-body{padding:1rem}
+  .photo-upload-box{padding:1rem}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<form method="POST" enctype="multipart/form-data" id="comboForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" name="image" value="{{ combo['image'] if combo else '🎁' }}">
+
+<div class="pf-grid">
+
+  <!-- الصورة والإعدادات -->
+  <div style="order:2">
+    <div class="a-card">
+      <div class="a-card-head">
+        <h3>🖼️ صورة العرض</h3>
+        {% if combo and combo['photo'] %}
+          <span style="font-size:.7rem;color:#22c55e;font-weight:700">✅ مرفوعة</span>
+        {% else %}
+          <span style="font-size:.7rem;color:var(--muted)">اختيارية</span>
+        {% endif %}
+      </div>
+      <div class="a-card-body">
+        {% if combo and combo['photo'] %}
+        <div class="current-photo-wrap" id="currentPhotoWrap">
+          <div class="current-photo-label">الصورة الحالية <span>محفوظة</span></div>
+          <img src="{{ combo['photo'] }}" alt="صورة العرض" class="current-photo-img" id="currentPhotoImg">
+          <label class="remove-toggle" id="removeToggleLabel">
+            <input type="checkbox" name="remove_photo" id="removePhotoCheck" onchange="handleRemoveToggle(this)">
+            <span id="removeToggleText">🗑️ حذف الصورة الحالية</span>
+          </label>
+        </div>
+        {% endif %}
+        <div class="photo-upload-box" id="uploadBox">
+          <input type="file" name="photo" id="photoInput" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif" onchange="handlePhotoSelect(this)">
+          <span class="photo-upload-icon">📷</span>
+          <div class="photo-upload-label">
+            <strong>اضغط لرفع صورة</strong>
+            أو اسحب وأفلت<br>
+            <small style="opacity:.6">PNG · JPG · WebP · GIF</small>
+          </div>
+        </div>
+        <div class="photo-preview-wrap" id="previewWrap">
+          <img src="" alt="معاينة" class="photo-preview-img" id="previewImg">
+          <div class="photo-preview-actions">
+            <button type="button" class="btn btn-red btn-sm" onclick="clearPhotoSelection()" style="flex:1">✕ إلغاء</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="a-card">
+      <div class="a-card-head"><h3>⚙️ الحالة والإعدادات</h3></div>
+      <div class="a-card-body">
+        <div class="fg">
+          <label class="fg-check">
+            <input type="checkbox" name="featured" {{ 'checked' if not combo or combo['featured'] }}>
+            ⭐ عرض مميز (يظهر في الرئيسية)
+          </label>
+        </div>
+        <div class="fg">
+          <label class="fg-check">
+            <input type="checkbox" name="active" {{ 'checked' if not combo or combo['active'] }}>
+            ✅ نشط (ظاهر للعملاء)
+          </label>
+        </div>
+        <div class="fg">
+          <label>ترتيب العرض</label>
+          <input type="number" name="sort_order" min="0" value="{{ combo['sort_order'] if combo else 0 }}">
+        </div>
+        <div class="fg" style="margin-bottom:0">
+          <label>الكمية المتاحة فعلياً</label>
+          <div class="readonly-box">{{ combo['stock'] if combo else '—' }} عرض</div>
+          <div class="stock-note">بتتحسب أوتوماتيك من مخزون النوعين تحت — مفيش رقم بيتكتب يدوى.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- بيانات العرض -->
+  <div style="order:1">
+
+    <div class="a-card">
+      <div class="a-card-head"><h3>📝 بيانات العرض</h3></div>
+      <div class="a-card-body">
+        <div class="fg-row">
+          <div class="fg">
+            <label>اسم العرض بالعربى *</label>
+            <input type="text" name="name_ar" required value="{{ combo['name_ar'] if combo else '' }}" placeholder="عرض فلتر + شمعة">
+          </div>
+          <div class="fg">
+            <label>اسم العرض بالإنجليزى (اختيارى)</label>
+            <input type="text" name="name_en" value="{{ combo['name_en'] if combo else '' }}" placeholder="Filter + Plug Bundle">
+          </div>
+        </div>
+        <div class="fg">
+          <label>الوصف بالعربى</label>
+          <textarea name="desc_ar" rows="2" placeholder="وصف العرض...">{{ combo['desc_ar'] if combo else '' }}</textarea>
+        </div>
+        <div class="fg">
+          <label>الوصف بالإنجليزى</label>
+          <textarea name="desc_en" rows="2" placeholder="Bundle description..." style="direction:ltr">{{ combo['desc_en'] if combo else '' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="a-card">
+      <div class="a-card-head"><h3>💰 السعر</h3></div>
+      <div class="a-card-body">
+        <div class="fg-row">
+          <div class="fg">
+            <label>سعر العرض (جنيه) *</label>
+            <input type="number" name="price" required min="0" step="0.01" value="{{ combo['price'] if combo else '' }}" placeholder="299.00">
+          </div>
+          <div class="fg">
+            <label>السعر القديم (اختيارى)</label>
+            <input type="number" name="old_price" min="0" step="0.01" value="{{ combo['old_price'] if combo and combo['old_price'] else '' }}" placeholder="349.00">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="a-card">
+      <div class="a-card-head"><h3>🧩 مكوّنات العرض</h3></div>
+      <div class="a-card-body">
+        <div class="combo-part-box">
+          <h4>النوع الأول</h4>
+          <div class="fg-row qty-row">
+            <div class="fg" style="margin-bottom:0">
+              <label>المنتج *</label>
+              <select name="combo1_id" required>
+                <option value="">— اختر منتج —</option>
+                {% for cp in component_products %}
+                <option value="{{ cp['id'] }}" {{ 'selected' if combo and combo['combo1_id']==cp['id'] }}>
+                  {{ cp['name_ar'] }}{% if cp['weight'] %} ({{ cp['weight'] }}){% endif %} — أونلاين: {{ cp['stock'] }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="fg" style="margin-bottom:0">
+              <label>الكمية فى العرض *</label>
+              <input type="number" name="combo1_qty" min="1" required value="{{ combo['combo1_qty'] if combo else 1 }}">
+            </div>
+          </div>
+        </div>
+        <div class="combo-part-box" style="margin-bottom:0">
+          <h4>النوع الثانى</h4>
+          <div class="fg-row qty-row">
+            <div class="fg" style="margin-bottom:0">
+              <label>المنتج *</label>
+              <select name="combo2_id" required>
+                <option value="">— اختر منتج —</option>
+                {% for cp in component_products %}
+                <option value="{{ cp['id'] }}" {{ 'selected' if combo and combo['combo2_id']==cp['id'] }}>
+                  {{ cp['name_ar'] }}{% if cp['weight'] %} ({{ cp['weight'] }}){% endif %} — أونلاين: {{ cp['stock'] }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="fg" style="margin-bottom:0">
+              <label>الكمية فى العرض *</label>
+              <input type="number" name="combo2_qty" min="1" required value="{{ combo['combo2_qty'] if combo else 1 }}">
+            </div>
+          </div>
+        </div>
+        <div class="stock-note" style="margin-top:.7rem">
+          مثال: لو النوع الأول "فلتر زيت" بكمية 1، والنوع الثانى "شمعة" بكمية 2 — كل عرض متباع بيخصم 1 فلتر + 2 شمعة من المخزون الحقيقى.
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+      <button type="submit" class="btn btn-gold" style="flex:1;padding:.78rem;font-size:.93rem;justify-content:center">
+        {{ '💾 حفظ التعديلات' if action=='edit' else '➕ إضافة العرض' }}
+      </button>
+      <a href="{{ url_for('admin_combos') }}" class="btn btn-ghost" style="flex:1;padding:.78rem;font-size:.93rem;justify-content:center">
+        ↩️ إلغاء
+      </a>
+    </div>
+  </div>
+
+</div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var uploadBox   = document.getElementById('uploadBox');
+var photoInput  = document.getElementById('photoInput');
+var previewWrap = document.getElementById('previewWrap');
+var previewImg  = document.getElementById('previewImg');
+var removeCheck = document.getElementById('removePhotoCheck');
+
+uploadBox.addEventListener('dragover', function(e){ e.preventDefault(); uploadBox.classList.add('drag-over'); });
+uploadBox.addEventListener('dragleave', function(){ uploadBox.classList.remove('drag-over'); });
+uploadBox.addEventListener('drop', function(e){
+  e.preventDefault(); uploadBox.classList.remove('drag-over');
+  var file = e.dataTransfer.files[0];
+  if(file){ photoInput.files = e.dataTransfer.files; showPreview(file); }
+});
+
+function handlePhotoSelect(input){
+  if(input.files && input.files[0]){
+    showPreview(input.files[0]);
+    if(removeCheck){ removeCheck.checked=false; handleRemoveToggle(removeCheck); }
+  }
+}
+function showPreview(file){
+  var reader = new FileReader();
+  reader.onload = function(e){ previewImg.src=e.target.result; previewWrap.classList.add('show'); uploadBox.style.borderColor='var(--gold)'; };
+  reader.readAsDataURL(file);
+}
+function clearPhotoSelection(){
+  photoInput.value=''; previewImg.src=''; previewWrap.classList.remove('show'); uploadBox.style.borderColor='';
+}
+function handleRemoveToggle(cb){
+  var label = document.getElementById('removeToggleText');
+  var img   = document.getElementById('currentPhotoImg');
+  if(!img) return;
+  if(cb.checked){ img.style.opacity='.3'; img.style.filter='grayscale(1)'; if(label) label.textContent='↩️ استرجاع الصورة'; clearPhotoSelection(); }
+  else { img.style.opacity=''; img.style.filter=''; if(label) label.textContent='🗑️ حذف الصورة الحالية'; }
+}
+</script>
+{% endblock %}

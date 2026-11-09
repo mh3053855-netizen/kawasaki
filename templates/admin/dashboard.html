@@ -1,0 +1,256 @@
+{% extends "admin/base.html" %}
+{% block title %}لوحة التحكم | M.Kawasaki Admin{% endblock %}
+{% block page_title %}لوحة التحكم{% endblock %}
+{% block extra_css %}
+<style>
+:root{--olive:#4a7c59;--olive-dark:#2d5a3d;--olive-light:#6fa882;--shadow:0 4px 24px rgba(0,0,0,.08)}
+
+/* ── KPI Grid ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.75rem}
+.kpi{background:#fff;border-radius:16px;padding:1.25rem 1.3rem;box-shadow:var(--shadow);display:flex;align-items:center;gap:.9rem;position:relative;overflow:hidden;transition:transform .2s;cursor:default}
+.kpi:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,.13)}
+.kpi::before{content:'';position:absolute;top:0;left:0;width:5px;height:100%;border-radius:0 0 0 16px}
+.kpi.green::before{background:var(--olive)}.kpi.gold::before{background:#c9a84c}.kpi.blue::before{background:#2980b9}.kpi.purple::before{background:#8e44ad}.kpi.orange::before{background:#e67e22}.kpi.red::before{background:#c0392b}
+.kpi-icon{width:48px;height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+.kpi.green .kpi-icon{background:#e8f5ee}.kpi.gold .kpi-icon{background:#fdf6e3}.kpi.blue .kpi-icon{background:#e8f4fd}.kpi.purple .kpi-icon{background:#f5eefb}.kpi.orange .kpi-icon{background:#fef5e7}.kpi.red .kpi-icon{background:#fdedec}
+.kpi-body strong{display:block;font-size:1.5rem;font-weight:800;color:#1a2018;line-height:1.1;direction:ltr;text-align:right}
+.kpi-body span{font-size:.73rem;color:#6b7b6e;font-weight:500}
+.kpi-tag{margin-top:.25rem;font-size:.68rem;font-weight:600;padding:2px 7px;border-radius:20px;display:inline-block;background:#f0f7f3;color:var(--olive-dark)}
+
+/* ── Charts Row ── */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:1rem;margin-bottom:1.75rem}
+.chart-card,.data-card{background:#fff;border-radius:16px;padding:1.4rem;box-shadow:var(--shadow)}
+.card-title{font-size:.9rem;font-weight:700;color:#1a2018;margin-bottom:1.1rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.card-title a{font-size:.71rem;color:var(--olive);font-weight:500;text-decoration:none}
+
+/* ── Bar Chart ── */
+.bar-chart{display:flex;align-items:flex-end;gap:.4rem;height:140px;padding-bottom:.5rem;border-bottom:2px solid #f0f0f0;margin-bottom:.3rem}
+.bw{flex:1;display:flex;flex-direction:column;align-items:center;gap:.22rem;height:100%;justify-content:flex-end}
+.bv{font-size:.58rem;font-weight:700;color:#8b9b8e}
+.bar{width:100%;border-radius:6px 6px 0 0;background:linear-gradient(180deg,var(--olive-light),var(--olive-dark));min-height:4px;cursor:pointer;transition:filter .15s}
+.bar:hover{filter:brightness(1.12)}
+.bl{font-size:.58rem;color:#8b9b8e;text-align:center;margin-top:.12rem}
+
+/* ── Donut ── */
+.donut-wrap{display:flex;flex-direction:column;align-items:center;gap:.9rem}
+.donut-legend{width:100%;list-style:none;padding:0;margin:0}
+.donut-legend li{display:flex;align-items:center;gap:.45rem;font-size:.75rem;margin-bottom:.38rem;color:#1a2018}
+.donut-legend .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
+/* ── Bottom Grid ── */
+.bottom-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:1rem}
+.mini-table{width:100%;border-collapse:collapse;font-size:.79rem}
+.mini-table th{text-align:right;padding:.38rem .55rem;color:#8b9b8e;font-weight:600;font-size:.68rem;border-bottom:2px solid #f4f4f4}
+.mini-table td{padding:.6rem .55rem;border-bottom:1px solid #f8f8f8;color:#1a2018;vertical-align:middle}
+.mini-table tr:last-child td{border-bottom:none}
+.mini-table tr:hover td{background:#fafdf8}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.65rem;font-weight:700}
+.badge-confirmed{background:#e8f5ee;color:var(--olive-dark)}.badge-pending{background:#fef9e7;color:#b7950b}.badge-packed{background:#fdf3e7;color:#9a5c0a}.badge-shipped{background:#e8f4fd;color:#1a5276}.badge-delivered{background:#e3f9e5;color:#1a6630}.badge-cancelled{background:#fdedec;color:#c0392b}
+
+/* ── Products ── */
+.prod-row{display:flex;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid #f4f4f4}
+.prod-row:last-child{border-bottom:none}
+.prod-emoji{font-size:1.4rem;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:#f7faf5;border-radius:10px;flex-shrink:0}
+.prod-info{flex:1;min-width:0}
+.prod-info strong{font-size:.78rem;color:#1a2018;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prod-info small{font-size:.66rem;color:#8b9b8e}
+.prog-bar{height:3px;background:#eee;border-radius:4px;margin-top:.28rem}
+.prog-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--olive-light),var(--olive-dark))}
+.prod-rev{text-align:left;direction:ltr;flex-shrink:0}
+.prod-rev strong{font-size:.8rem;color:var(--olive-dark);font-weight:700;display:block}
+.prod-rev small{font-size:.63rem;color:#8b9b8e}
+
+/* ══ RESPONSIVE ══ */
+@media(max-width:1200px){
+  .kpi-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:900px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .charts-row,.bottom-grid{grid-template-columns:1fr}
+  .kpi-body strong{font-size:1.3rem}
+}
+@media(max-width:600px){
+  .kpi-grid{grid-template-columns:1fr 1fr;gap:.75rem}
+  .kpi{padding:1rem;gap:.7rem}
+  .kpi-icon{width:40px;height:40px;font-size:1.2rem}
+  .kpi-body strong{font-size:1.15rem}
+  .kpi-body span{font-size:.68rem}
+  .kpi-tag{display:none}
+  .chart-card,.data-card{padding:1.1rem}
+  .bar-chart{height:110px}
+  /* إخفاء بعض أعمدة الجدول على الموبايل */
+  .mini-table .hide-mob{display:none}
+}
+@media(max-width:400px){
+  .kpi-grid{grid-template-columns:1fr}
+  .kpi.span-2{grid-column:span 1}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- KPI Cards -->
+<div class="kpi-grid">
+  <div class="kpi green"><div class="kpi-icon">💰</div><div class="kpi-body"><strong>{{ total_revenue|int }}</strong><span>إجمالى الإيرادات (جنيه)</span><div class="kpi-tag">كل الوقت</div></div></div>
+  <div class="kpi blue"><div class="kpi-icon">📦</div><div class="kpi-body"><strong>{{ total_orders }}</strong><span>إجمالى الطلبات</span><div class="kpi-tag">نمو مستمر</div></div></div>
+  <div class="kpi purple"><div class="kpi-icon">👥</div><div class="kpi-body"><strong>{{ total_customers }}</strong><span>عملاء فريدون</span><div class="kpi-tag">قاعدة متنامية</div></div></div>
+  <div class="kpi gold"><div class="kpi-icon">🛒</div><div class="kpi-body"><strong>{{ total_products }}</strong><span>منتج نشط</span><div class="kpi-tag">المتجر مكتمل</div></div></div>
+  <div class="kpi orange"><div class="kpi-icon">📈</div><div class="kpi-body"><strong>{{ avg_order|int }}</strong><span>متوسط قيمة الطلب (جنيه)</span><div class="kpi-tag">AOV</div></div></div>
+  <div class="kpi red"><div class="kpi-icon">🏷️</div><div class="kpi-body"><strong>{{ total_items_sold }}</strong><span>قطعة مباعة</span><div class="kpi-tag">حركة ممتازة</div></div></div>
+  <div class="kpi green span-2" style="grid-column:span 2"><div class="kpi-icon">🏙️</div><div class="kpi-body"><strong>{{ top_city or '—' }}</strong><span>أعلى مدينة مبيعاً</span><div class="kpi-tag">الأكثر طلباً</div></div></div>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi green"><div class="kpi-icon">📈</div><div class="kpi-body"><strong>{{ st.gross|int }}</strong><span>الربح الإجمالى (جنيه)</span></div></div>
+  <div class="kpi gold"><div class="kpi-icon">💵</div><div class="kpi-body"><strong>{{ st.net|int }}</strong><span>صافى الربح بعد المصاريف</span></div></div>
+  <div class="kpi blue"><div class="kpi-icon">🏦</div><div class="kpi-body"><strong>{{ st.treasury|int }}</strong><span>رصيد الخزنة</span></div></div>
+  <div class="kpi red"><div class="kpi-icon">⚠️</div><div class="kpi-body"><strong>{{ low|length }}</strong><span>منتجات قاربت على النفاد</span></div></div>
+</div>
+
+<!-- Charts -->
+<div class="charts-row">
+  <div class="chart-card">
+    <div class="card-title"><span>📊 إيرادات آخر 7 أيام</span></div>
+    <div class="bar-chart">
+      {% if daily_revenues %}
+        {% set max_rev = namespace(v=1) %}
+        {% for d,r in daily_revenues %}{% if r > max_rev.v %}{% set max_rev.v = r %}{% endif %}{% endfor %}
+        {% for day_label, rev in daily_revenues %}
+        <div class="bw">
+          <div class="bv">{{ rev|int }}</div>
+          <div class="bar" style="height:{{ ((rev/max_rev.v)*100)|int if max_rev.v > 0 else 4 }}%" title="{{ day_label }}: {{ rev|int }} جنيه"></div>
+          <div class="bl">{{ day_label }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="text-align:center;width:100%;color:#8b9b8e;font-size:.83rem;padding:2rem 0">لا توجد بيانات بعد</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="card-title"><span>🍩 حالة الطلبات</span></div>
+    <div class="donut-wrap">
+      {% set colors = ['#4a7c59','#e67e22','#2980b9','#27ae60','#c0392b'] %}
+      {% set statuses = [('confirmed','مؤكد'),('packed','تغليف'),('shipped','شحن'),('delivered','تم التسليم'),('cancelled','ملغى')] %}
+      {% set total_o = namespace(v=0) %}
+      {% for k,l in statuses %}{% set total_o.v = total_o.v + (status_counts.get(k,0) if status_counts else 0) %}{% endfor %}
+      <svg viewBox="0 0 42 42" width="120" height="120">
+        <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#eee" stroke-width="5"/>
+        {% set off = namespace(v=25) %}
+        {% for key,label in statuses %}
+          {% set cnt = status_counts.get(key,0) if status_counts else 0 %}
+          {% set pct = (cnt/total_o.v*100)|round(1) if total_o.v > 0 else 0 %}
+          {% if pct > 0 %}
+          <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="{{ colors[loop.index0] }}" stroke-width="5"
+                  stroke-dasharray="{{ pct }} {{ 100-pct }}" stroke-dashoffset="{{ off.v }}" transform="rotate(-90 21 21)"/>
+          {% set off.v = off.v - pct %}
+          {% endif %}
+        {% endfor %}
+        <text x="21" y="24" text-anchor="middle" font-size="7" font-weight="bold" fill="#1a2018">{{ total_orders }}</text>
+      </svg>
+      <ul class="donut-legend">
+        {% for key,label in statuses %}
+        <li>
+          <span class="dot" style="background:{{ colors[loop.index0] }}"></span>
+          {{ label }}
+          <span style="margin-right:auto;font-weight:700">{{ status_counts.get(key,0) if status_counts else 0 }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Grid -->
+<div class="bottom-grid">
+  <div class="data-card">
+    <div class="card-title">
+      <span>🕐 آخر الطلبات</span>
+      <a href="{{ url_for('admin_orders') }}">عرض الكل ←</a>
+    </div>
+    {% if recent_orders %}
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <table class="mini-table">
+      <thead>
+        <tr>
+          <th>رقم الطلب</th>
+          <th>العميل</th>
+          <th class="hide-mob">المدينة</th>
+          <th>الإجمالى</th>
+          <th>الحالة</th>
+          <th class="hide-mob">التاريخ</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in recent_orders %}
+        <tr>
+          <td><strong style="color:var(--olive-dark)">#{{ o['order_number'] }}</strong></td>
+          <td>{{ o['full_name'] }}</td>
+          <td class="hide-mob">{{ o['city'] }}</td>
+          <td><strong>{{ o['grand_total']|int }} جنيه</strong></td>
+          <td><span class="badge badge-{{ o['status'] }}">{% if o['status']=='confirmed' %}✅ مؤكد{% elif o['status']=='pending' %}⏳{% elif o['status']=='packed' %}📦{% elif o['status']=='shipped' %}🚚{% elif o['status']=='delivered' %}🏠{% elif o['status']=='cancelled' %}❌{% else %}{{ o['status'] }}{% endif %}</span></td>
+          <td class="hide-mob" style="color:#8b9b8e;font-size:.68rem">{{ o['created_at'][:10] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:2.5rem;color:#8b9b8e"><div style="font-size:2.5rem">📦</div><p style="margin-top:.5rem">لا توجد طلبات بعد</p></div>
+    {% endif %}
+  </div>
+
+  <div class="data-card">
+    <div class="card-title">
+      <span>🏆 أكثر المنتجات مبيعاً</span>
+      <a href="{{ url_for('admin_products') }}">إدارة ←</a>
+    </div>
+    {% if top_products %}
+      {% set max_q = namespace(v=1) %}
+      {% for n,e,q,r in top_products %}{% if q > max_q.v %}{% set max_q.v = q %}{% endif %}{% endfor %}
+      {% for name,emoji,qty,rev in top_products %}
+      <div class="prod-row">
+        <div class="prod-emoji">{{ emoji or '🏍️' }}</div>
+        <div class="prod-info">
+          <strong>{{ name }}</strong>
+          <small>{{ qty }} قطعة مباعة</small>
+          <div class="prog-bar"><div class="prog-fill" style="width:{{ ((qty/max_q.v)*100)|int }}%"></div></div>
+        </div>
+        <div class="prod-rev"><strong>{{ rev|int }}</strong><small>جنيه</small></div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div style="text-align:center;padding:2.5rem;color:#8b9b8e"><div style="font-size:2.5rem">📊</div><p style="margin-top:.5rem">لا توجد مبيعات بعد</p></div>
+    {% endif %}
+  </div>
+</div>
+
+{% if recent_status_changes %}
+<div class="data-card" style="margin-top:1rem">
+  <div class="card-title">
+    <span>🔔 آخر تغييرات حالة الطلبات</span>
+    <a href="{{ url_for('admin_orders') }}">إدارة الطلبات ←</a>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:.45rem">
+    {% for ch in recent_status_changes %}
+    {% set st = ch['status'] %}
+    <div style="display:flex;align-items:center;gap:.75rem;padding:.55rem .45rem;border-radius:10px;background:#fafdf8;border:1px solid #eef4eb">
+      <div style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;background:{% if st=='confirmed' %}#e8f5ee{% elif st=='packed' %}#fdf3e7{% elif st=='shipped' %}#e8f4fd{% elif st=='delivered' %}#e3f9e5{% elif st=='cancelled' %}#fdedec{% else %}#f4f4f4{% endif %}">
+        {% if st=='confirmed' %}✅{% elif st=='packed' %}📦{% elif st=='shipped' %}🚚{% elif st=='delivered' %}🏠{% elif st=='cancelled' %}❌{% else %}🔄{% endif %}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.78rem;font-weight:700;color:#1a2018;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          <strong style="color:var(--olive-dark)">{{ ch['order_number'] }}</strong> — {{ ch['full_name'] }}
+        </div>
+        <div style="font-size:.7rem;color:#8b9b8e;margin-top:.1rem">
+          → <span class="badge badge-{{ st }}">{% if st=='confirmed' %}مؤكد{% elif st=='packed' %}تغليف{% elif st=='shipped' %}شحن{% elif st=='delivered' %}تم التسليم{% elif st=='cancelled' %}ملغى{% else %}{{ st }}{% endif %}</span>
+        </div>
+      </div>
+      <div style="font-size:.66rem;color:#8b9b8e;white-space:nowrap;flex-shrink:0">{{ ch['changed_at'][:16]|replace('T',' ') }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,21 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>فاتورة {{ o.order_number }}</title><style id="pg">@page{size:80mm auto;margin:0}</style>
+<style>*{box-sizing:border-box}body{margin:0;background:#e5e5e5;font-family:Tahoma,Arial,sans-serif;color:#000}
+.r{width:72mm;margin:10px auto;background:#fff;padding:3mm;font-size:12px;line-height:1.45}.c{text-align:center}.b{font-weight:bold}.big{font-size:17px}
+hr{border:0;border-top:1px dashed #000;margin:5px 0}.row{display:flex;justify-content:space-between;gap:6px}.it{margin:3px 0}.it .nm{font-weight:bold}.tot{font-size:15px;font-weight:bold}
+.np{text-align:center;margin:10px}.np button{padding:8px 14px;margin:2px;font-family:inherit;cursor:pointer}
+@media print{body{background:#fff}.r{margin:0 auto;padding:2mm}.np{display:none}}</style></head><body>
+<div class="np"><button onclick="W(80)">🖨 طباعة 80mm</button><button onclick="W(58)">🖨 طباعة 58mm</button><a href="{{ url_for('admin_orders') }}">← الطلبات</a></div>
+<div class="r" id="r"><div class="c b big">{{ S('store_name') }}</div><div class="c">{{ S('store_sub') }}<br>{{ S('phone') }}<br>{{ S('address') }}</div><hr>
+<div class="row"><span>فاتورة:</span><b>{{ o.order_number }}</b></div><div class="row"><span>التاريخ:</span><span>{{ o.created_at }}</span></div>
+<div class="row"><span>العميل:</span><span>{{ o.full_name }}</span></div>{% if o.phone %}<div class="row"><span>الهاتف:</span><span>{{ o.phone }}</span></div>{% endif %}
+{% if o.city %}<div>العنوان: {{ o.city }} - {{ o.district }} - {{ o.street }} - {{ o.building }}{% if o.postal %} ({{ o.postal }}){% endif %}{% if o.address %}<br>ملاحظات: {{ o.address }}{% endif %}</div>{% endif %}
+{% if o.waybill %}<div class="row"><span>بوليصة الشحن:</span><b>{{ o.waybill }}</b></div>{% endif %}<div class="row"><span>القناة:</span><span>{{ 'أونلاين' if o.channel=='online' else 'محل' }}</span></div><div class="row"><span>الدفع:</span><span>{{ 'كاش عند الاستلام' if o.channel=='online' else 'محل' }}</span></div><hr>
+{% for i in items %}<div class="it"><div class="nm">{{ i.name }}</div><div class="row"><span>{{ i.qty }} × {{ i.price|m }}</span><span>{{ (i.qty*i.price)|m }}</span></div></div>{% endfor %}<hr>
+<div class="row"><span>المجموع</span><span>{{ (o.total if o.total is not none else o.grand_total)|m }}</span></div>
+{% if o.discount %}<div class="row"><span>خصم {{ o.coupon }}</span><span>−{{ o.discount|m }}</span></div>{% endif %}
+{% if o.tax %}<div class="row"><span>ضريبة</span><span>{{ o.tax|m }}</span></div>{% endif %}
+{% if o.channel=='online' %}<div class="row"><span>الشحن</span><span>{% if o.shipping %}{{ o.shipping|m }}{% else %}مجاني{% endif %}</span></div>{% endif %}<hr>
+<div class="row tot"><span>الإجمالي</span><span>{{ o.grand_total|m }} ج.م</span></div><div class="row"><span>المدفوع</span><span>{{ o.paid|m }}</span></div>
+{% if o.grand_total-o.paid>0.001 %}<div class="row b"><span>المتبقي</span><span>{{ (o.grand_total-o.paid)|m }}</span></div>{% endif %}<hr><div class="c">شكراً لتعاملكم معنا 🏍️</div></div>
+<script>function W(w){document.getElementById('pg').textContent='@page{size:'+w+'mm auto;margin:0}';document.getElementById('r').style.width=(w-8)+'mm';setTimeout(print,100)}
+{% if request.args.get('print') %}window.onload=function(){W(80)};{% endif %}</script></body></html>

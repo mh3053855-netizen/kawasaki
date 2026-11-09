@@ -1,0 +1,5 @@
+{% extends 'base.html' %}{% block body %}<div class="card"><h2>من نحن</h2><p>{{ S('about') }}</p></div><br>
+<div class="card"><h3>📍 موقع المحل</h3><p>{{ S('address') }}<br>📞 {{ S('phone') }}{% if S('work_hours') %}<br>🕒 {{ S('work_hours') }}{% endif %}</p>
+{% if map_src %}<div style="border-radius:12px;overflow:hidden;margin:10px 0"><iframe src="{{ map_src }}" width="100%" height="320" style="border:0" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>{% endif %}
+{% if S('map_link') %}<a class="btn" href="{{ S('map_link') }}" target="_blank" rel="noopener">🗺️ افتح الموقع على خرائط جوجل</a>{% endif %}
+{% if not map_src and not S('map_link') %}<p class="mut">لم يتم إضافة لوكيشن المحل بعد (من لوحة الإدارة ← الإعدادات ← موقع المحل).</p>{% endif %}</div>{% endblock %}
